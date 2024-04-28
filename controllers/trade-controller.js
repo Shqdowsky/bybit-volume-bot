@@ -36,7 +36,6 @@ class tradeController{
         if(balance > (startBalance / 2)){
           const ammount = (startBalance / 2 - loss) / parseFloat(price);
           bayableTokenBalance = Service.roundDown(ammount, basePrecision[0]);
-          console.log("Y:", bayableTokenBalance)
           strBayableTokenBalance = bayableTokenBalance.toString();
         }
         else{

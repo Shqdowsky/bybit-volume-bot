@@ -85,9 +85,9 @@ async function trade() {
   const client = new RestClientV5({
     key: api_key,
     secret: secret_api_key,
-    recvWindow: 60000,
+    recv_window: 5000,
+    enable_time_sync: true,
   });
-
   const token = await askQuestion('В каком токене торговать: ');
   const stop = await askQuestion('Какой оборот наторговать: ');
   rl.close();
@@ -96,6 +96,7 @@ async function trade() {
   let startBalance = await Service.getAccountBalance("USDT", client);
 
   while(volume < parseFloat(stop)){
+    let {loss, Balance} = await countLoss(client, token, startBalance);
     Service.createSeparator();
     const response = await getTokenInfoToBuy(token, client);
     if(firstBuy){
@@ -105,7 +106,7 @@ async function trade() {
     }
     else{
         if(lastSellPrice > 0 && lastSellPrice <= parseFloat(response) ){
-          const lastBuyPrice = await tradeController.buyToken(client, token, lastSellPrice, basePrecisionLength);
+          const lastBuyPrice = await tradeController.buyToken(client, token, lastSellPrice, basePrecisionLength, startBalance, loss);
           const tokenBalance = await Service.getAccountBalance(token.toUpperCase(), client);
           const salableTokenBalance = Service.roundDown(tokenBalance, basePrecisionLength[0]);
           await Service.sleep(200);
@@ -127,7 +128,7 @@ async function trade() {
     }
     firstBuy = false;
 
-    let {loss, Balance} = await countLoss(client, token, startBalance);
+
     console.log(chalk.white.bgRed.bold('•' + ' ' + `Затраты: ~ ${Service.roundDown(loss, 2)}$`));
 
     if(Balance < (startBalance / 2) - loss - 5){
